@@ -15,8 +15,12 @@ describe('createPlaybackSession', () => {
         expect(snap.screenHidden).toBe(true);
         expect(snap.shouldKeepAudio).toBe(true);
         expect(snap.adsEnabled).toBe(false);
+        expect(snap.pictureInPictureEnabled).toBe(true);
+        expect(snap.floatingMiniPlayer).toBe(true);
         expect(playbackPolicy.adsEnabled).toBe(false);
         expect(playbackPolicy.continueWhenScreenHidden).toBe(true);
+        expect(playbackPolicy.pictureInPictureEnabled).toBe(true);
+        expect(playbackPolicy.floatingMiniPlayer).toBe(true);
     });
 
     it('stops the session when the mini player is dismissed', async () => {

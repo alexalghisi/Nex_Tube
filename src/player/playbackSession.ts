@@ -11,6 +11,8 @@ export type PlaybackSnapshot = {
     screenHidden: boolean;
     shouldKeepAudio: boolean;
     adsEnabled: false;
+    pictureInPictureEnabled: boolean;
+    floatingMiniPlayer: boolean;
 };
 
 export type PlaybackSession = {
@@ -46,6 +48,8 @@ export function createPlaybackSession(): PlaybackSession {
             screenHidden,
             shouldKeepAudio: shouldKeepAudio && status === 'playing',
             adsEnabled: playbackPolicy.adsEnabled,
+            pictureInPictureEnabled: playbackPolicy.pictureInPictureEnabled,
+            floatingMiniPlayer: playbackPolicy.floatingMiniPlayer,
         };
     }
 
