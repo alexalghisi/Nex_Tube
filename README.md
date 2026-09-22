@@ -59,16 +59,37 @@ On initial launch, users see the Connect with Google screen with options to sign
 
 ## Release Software & Device Installation
 
-Tag a version (`git tag v1.0.0 && git push --tags`) and the CI workflow produces three archives on the [GitHub Releases](https://github.com/alexalghisi/Nex_Tube/releases) page: `nextube-web.tar.gz`, `nextube-ios.tar.gz`, and `nextube-android.tar.gz`.
+Tag a version (`git tag v1.0.0 && git push --tags`) and the CI workflow publishes installable builds on the [GitHub Releases](https://github.com/alexalghisi/Nex_Tube/releases) page:
+
+| Asset | Device |
+| --- | --- |
+| `nextube-web.tar.gz` | MacBook / any browser / iOS PWA via Safari |
+| `nextube-android.apk` | Android phones & tablets (sideload) |
+| `nextube-ios.ipa` | iPhone & iPad (via AltStore / SideStore) |
+
+### CI Setup for Native Builds
+
+The Android APK and iOS IPA are built by EAS Build in CI. To enable them:
+
+1. Create an access token at https://expo.dev/settings/access-tokens
+2. Add it as `EXPO_TOKEN` in **GitHub → Settings → Secrets → Actions**
+3. For iOS, also add `APPLE_ID` and run `npx eas credentials` locally to set up signing
+
+Without `EXPO_TOKEN`, releases still ship the web tarball. Without `APPLE_ID`, the iOS step is skipped.
+
+### Manual Builds
+
+```bash
+npx eas build -p android --profile preview
+npx eas build -p ios --profile preview
+```
 
 ### iPhone & iPad (iOS)
 1. **PWA (Safari)**: Open the web build URL in Safari, tap **Share** → **Add to Home Screen**. Opens as a full-screen app with background lock-screen audio playback.
-2. **AltStore / SideStore**: Build the standalone bundle with `npm run build:ios` or package an IPA with `npx eas build -p ios --profile preview`, then install via AltStore or SideStore without jailbreak.
-3. **EAS Internal Preview**: Run `npx eas build -p ios --profile preview` to generate an ad-hoc install link sent directly to your device.
+2. **AltStore / SideStore**: Download the `.ipa` from GitHub Releases and install via AltStore or SideStore without jailbreak.
 
 ### Android
-1. **APK Direct Install**: Run `npx eas build -p android --profile preview` to produce an installable standalone `.apk`.
-2. **Standalone Bundle**: Run `npm run build:android` to produce the Hermes bytecode bundle in `dist/`.
+1. **APK Direct Install**: Download `nextube-android.apk` from GitHub Releases and sideload onto your device.
 
 ## Tests
 
