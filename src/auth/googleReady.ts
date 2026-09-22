@@ -21,3 +21,14 @@ export function googleReadyOnThisPlatform(os: string, ids: GoogleClientIds): boo
     }
     return Boolean(ids.webClientId);
 }
+
+export function missingGoogleKeyForPlatform(os: string, ids: GoogleClientIds): string | null {
+    if (os === 'ios') {
+        return ids.iosClientId ? null : 'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID';
+    }
+    if (os === 'android') {
+        return ids.androidClientId ? null : 'EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID';
+    }
+    return ids.webClientId ? null : 'EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID';
+}
+
