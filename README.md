@@ -29,6 +29,7 @@ npm start
 | `npm run android` | Phone / tablet |
 | `npm run build` | Web production bundle (`dist/`) |
 | `npm run build:ios` | iOS production bundle (`dist/`) |
+| `npm run build:android` | Android production bundle (`dist/`) |
 | `npm test` | Unit + feature tests |
 | `npm run typecheck` | `tsc --noEmit` |
 
@@ -46,7 +47,7 @@ EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=
 
 Create OAuth clients in Google Cloud for those three platforms. iOS also needs the reversed client ID (the app config writes that URL scheme when the iOS id is present).
 
-Without the ids the rest of the app still runs. The Sign in button tells you which key is missing.
+On initial launch, users see the Connect with Google screen with options to sign in or Continue as Guest. Returning authenticated users bypass directly to the player. Without the ids the rest of the app still runs. The Sign in button tells you which key is missing.
 
 ## Playback
 
@@ -56,12 +57,16 @@ Without the ids the rest of the app still runs. The Sign in button tells you whi
 - iOS `UIBackgroundModes: audio` (system lock-screen playback), Android media playback service
 - Lock-screen / Media Session play and pause on web
 
-## iOS Distribution (Without App Store)
+## Release Software & Device Installation
 
-Distribute to family devices without App Store review:
-1. **PWA (Safari)**: Open the web URL in Safari on iOS, tap **Share** → **Add to Home Screen**. Runs full-screen with lock-screen background audio.
-2. **AltStore / SideStore**: Run `npm run build:ios` or build an IPA via `eas build -p ios --profile preview`, then sign and install via AltStore or SideStore.
-3. **Ad-Hoc / TestFlight**: Register family device UDIDs in Apple Developer and distribute ad-hoc build links directly.
+### iPhone & iPad (iOS)
+1. **PWA (Safari)**: Open the web build URL in Safari, tap **Share** → **Add to Home Screen**. Opens as a full-screen app with background lock-screen audio playback.
+2. **AltStore / SideStore**: Build the standalone bundle with `npm run build:ios` or package an IPA with `npx eas build -p ios --profile preview`, then install via AltStore or SideStore without jailbreak.
+3. **EAS Internal Preview**: Run `npx eas build -p ios --profile preview` to generate an ad-hoc install link sent directly to your device.
+
+### Android
+1. **APK Direct Install**: Run `npx eas build -p android --profile preview` to produce an installable standalone `.apk`.
+2. **Standalone Bundle**: Run `npm run build:android` to produce the Hermes bytecode bundle in `dist/`.
 
 ## Tests
 
