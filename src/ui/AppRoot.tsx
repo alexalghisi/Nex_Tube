@@ -24,6 +24,7 @@ import { armBackgroundAudio } from '../native/audioMode';
 import { bindLockScreen } from '../native/lockScreen';
 import { createPlaybackSession } from '../player/playbackSession';
 import { colors, radii, space } from '../theme';
+import { GoogleConnectScreen } from './GoogleConnectScreen';
 import { useGoogleSession } from './GoogleGate';
 import { PlayerHost } from './PlayerHost';
 
@@ -33,6 +34,8 @@ const LIKES_KEY = 'nex.likes';
 type Tab = 'home' | 'search' | 'library';
 
 export function AppRoot() {
+    const google = useGoogleSession();
+    const [guestEntered, setGuestEntered] = useState(false);
     const catalog = useMemo(() => {
         const extra = process.env.EXPO_PUBLIC_INVIDIOUS_ORIGIN;
         return createCatalog({
@@ -141,6 +144,17 @@ export function AppRoot() {
         push();
     }, [push]);
 
+    if (google.sessionRestored && !google.profile && !guestEntered) {
+        return (
+            <GoogleConnectScreen
+                onContinueGuest={() => setGuestEntered(true)}
+            />
+        );
+    }
+    if (!google.sessionRestored && !guestEntered) {
+        return <SafeAreaView style={styles.safe} />;
+    }
+
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar style="light" />
@@ -153,6 +167,7 @@ export function AppRoot() {
                     sessionRef.current.hideScreen();
                     push();
                 }}
+                onShowConnect={() => setGuestEntered(false)}
             />
             {watchOpen && snap.video ? (
                 <WatchBody
@@ -182,6 +197,7 @@ export function AppRoot() {
                     onTopic={setTopic}
                     onQuery={setQuery}
                     onOpen={openVideo}
+                    onShowConnect={() => setGuestEntered(false)}
                 />
             )}
             <PlayerHost
@@ -219,10 +235,12 @@ function Header({
     watchOpen,
     onBack,
     onHome,
+    onShowConnect,
 }: {
     watchOpen: boolean;
     onBack: () => void;
     onHome: () => void;
+    onShowConnect: () => void;
 }) {
     const google = useGoogleSession();
     return (
@@ -256,14 +274,26 @@ function Header({
                 ) : (
                     <Pressable
                         onPress={() => {
-                            google.signIn().catch(() => undefined);
+                            if (google.missingKey) {
+                                google.signIn().catch(() => undefined);
+                            } else {
+                                onShowConnect();
+                            }
                         }}
                         style={styles.signIn}
                         accessibilityRole="button"
-                        accessibilityLabel="Sign in with Google"
+                        accessibilityLabel={
+                            google.missingKey
+                                ? `Sign in (${google.missingKey})`
+                                : 'Sign in with Google'
+                        }
                     >
                         <Text style={styles.signInText}>
-                            {google.busy ? 'Signing in…' : 'Sign in'}
+                            {google.missingKey
+                                ? 'Missing Client ID'
+                                : google.busy
+                                ? 'Signing in…'
+                                : 'Sign in'}
                         </Text>
                     </Pressable>
                 )}
@@ -284,6 +314,7 @@ function Main({
     onTopic,
     onQuery,
     onOpen,
+    onShowConnect,
 }: {
     tab: Tab;
     topic: (typeof HOME_TOPICS)[number];
@@ -296,6 +327,7 @@ function Main({
     onTopic: (topic: (typeof HOME_TOPICS)[number]) => void;
     onQuery: (q: string) => void;
     onOpen: (id: string) => void;
+    onShowConnect: () => void;
 }) {
     const google = useGoogleSession();
     return (
@@ -348,6 +380,7 @@ function Main({
                     likes={likes}
                     tileW={tileW}
                     onOpen={onOpen}
+                    onShowConnect={onShowConnect}
                 />
             ) : (
                 <Shelf
@@ -369,11 +402,13 @@ function Library({
     likes,
     tileW,
     onOpen,
+    onShowConnect,
 }: {
     history: VideoSummary[];
     likes: VideoSummary[];
     tileW: number;
     onOpen: (id: string) => void;
+    onShowConnect: () => void;
 }) {
     const google = useGoogleSession();
     return (
@@ -383,22 +418,37 @@ function Library({
                     {google.profile ? google.profile.name : 'Signed out'}
                 </Text>
                 {google.profile ? (
-                    <Pressable onPress={() => google.signOut()} accessibilityRole="button">
+                    <Pressable
+                        onPress={() => {
+                            google.signOut().catch(() => undefined);
+                        }}
+                        accessibilityRole="button"
+                    >
                         <Text style={styles.link}>Sign out</Text>
                     </Pressable>
                 ) : (
                     <Pressable
                         onPress={() => {
-                            google.signIn().catch(() => undefined);
+                            if (google.missingKey) {
+                                google.signIn().catch(() => undefined);
+                            } else {
+                                onShowConnect();
+                            }
                         }}
                         accessibilityRole="button"
                     >
-                        <Text style={styles.link}>Sign in with Google</Text>
+                        <Text style={styles.link}>
+                            {google.missingKey
+                                ? `Sign in (${google.missingKey})`
+                                : 'Sign in with Google'}
+                        </Text>
                     </Pressable>
                 )}
             </View>
             {google.profile ? (
                 <Text style={styles.meta}>{google.profile.email}</Text>
+            ) : google.missingKey ? (
+                <Text style={styles.warn}>Missing {google.missingKey}</Text>
             ) : (
                 <Text style={styles.meta}>
                     Google works on iOS, Android, and web once the client IDs are set.
