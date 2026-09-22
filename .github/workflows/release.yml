@@ -12,6 +12,9 @@ permissions:
 jobs:
     release:
         runs-on: ubuntu-latest
+        env:
+            EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+            APPLE_ID: ${{ secrets.APPLE_ID }}
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-node@v4
@@ -25,13 +28,14 @@ jobs:
                   npm run build
                   mkdir -p release-assets
                   tar -czf release-assets/nextube-web.tar.gz dist/
-            - run: |
-                  npm run build:ios
-                  tar -czf release-assets/nextube-ios.tar.gz dist/
-            - run: |
-                  npm run build:android
-                  tar -czf release-assets/nextube-android.tar.gz dist/
+            - name: Build Android APK
+              if: env.EXPO_TOKEN != ''
+              run: npx eas-cli build -p android --profile preview --non-interactive --output release-assets/nextube-android.apk
+            - name: Build iOS IPA
+              if: env.EXPO_TOKEN != '' && env.APPLE_ID != ''
+              run: npx eas-cli build -p ios --profile preview --non-interactive --output release-assets/nextube-ios.ipa
             - uses: softprops/action-gh-release@v2
               if: startsWith(github.ref, 'refs/tags/')
               with:
                   files: release-assets/*
+
