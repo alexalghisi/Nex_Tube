@@ -1,6 +1,6 @@
 import { ResizeMode, Video } from 'expo-av';
 import { useEffect, useRef } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Animated, PanResponder, StyleSheet, useWindowDimensions } from 'react-native';
 import { pickPlaybackStreams } from '../catalog/streamPick';
 import type { PlaybackSnapshot } from '../player/playbackSession';
 import { colors, space } from '../theme';
@@ -17,6 +17,30 @@ export function PlayerHost({ snap, watchOpen, headerOffset, onReport }: Props) {
     const { width } = useWindowDimensions();
     const uri = snap.video ? pickPlaybackStreams(snap.video.streams).videoUrl : null;
     const fullHeight = (width * 9) / 16;
+    const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+
+    useEffect(() => {
+        if (watchOpen) {
+            pan.setValue({ x: 0, y: 0 });
+            pan.setOffset({ x: 0, y: 0 });
+        }
+    }, [watchOpen, pan]);
+
+    const panResponder = useRef(
+        PanResponder.create({
+            onMoveShouldSetPanResponder: (_, gesture) =>
+                !watchOpen && (Math.abs(gesture.dx) > 3 || Math.abs(gesture.dy) > 3),
+            onPanResponderGrant: () => {
+                pan.extractOffset();
+            },
+            onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], {
+                useNativeDriver: false,
+            }),
+            onPanResponderRelease: () => {
+                pan.flattenOffset();
+            },
+        })
+    ).current;
 
     useEffect(() => {
         if (!uri || !ref.current) {
@@ -37,9 +61,12 @@ export function PlayerHost({ snap, watchOpen, headerOffset, onReport }: Props) {
 
     const full = watchOpen;
     return (
-        <View
+        <Animated.View
+            {...(!full ? panResponder.panHandlers : {})}
             style={[
-                full ? [styles.fullWrap, { top: headerOffset }] : styles.miniWrap,
+                full
+                    ? [styles.fullWrap, { top: headerOffset }]
+                    : [styles.miniWrap, pan.getLayout()],
                 { pointerEvents: 'box-none' },
             ]}
         >
@@ -61,7 +88,7 @@ export function PlayerHost({ snap, watchOpen, headerOffset, onReport }: Props) {
                     );
                 }}
             />
-        </View>
+        </Animated.View>
     );
 }
 

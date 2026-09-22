@@ -15,6 +15,7 @@
         "ios": "expo start --ios",
         "web": "expo start --web",
         "build": "expo export --platform web",
+        "build:ios": "expo export --platform ios",
         "export:web": "expo export --platform web",
         "typecheck": "tsc --noEmit",
         "test": "vitest run",
