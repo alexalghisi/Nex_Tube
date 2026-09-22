@@ -1,3 +1,10 @@
+import { GoogleGate } from './src/ui/GoogleGate';
+import { AppRoot } from './src/ui/AppRoot';
+
 export default function App() {
-    return null;
+    return (
+        <GoogleGate>
+            <AppRoot />
+        </GoogleGate>
+    );
 }
