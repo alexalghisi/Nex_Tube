@@ -12,7 +12,7 @@ This is the running app (`npm start` → `w` for web). The mini player at the bo
 
 Same shell, animated:
 
-![Nex Tube preview](docs/preview.svg)
+![Nex Tube preview](docs/preview.gif)
 
 ## Run
 
@@ -27,6 +27,7 @@ npm start
 | `npm run web` | Computer / browser |
 | `npm run ios` | iPhone / iPad |
 | `npm run android` | Phone / tablet |
+| `npm run build` | Web production bundle (`dist/`) |
 | `npm test` | Unit + feature tests |
 | `npm run typecheck` | `tsc --noEmit` |
 
