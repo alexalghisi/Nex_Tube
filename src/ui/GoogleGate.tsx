@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import { Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import {
     createContext,
     useCallback,
@@ -11,7 +11,11 @@ import {
     useState,
     type ReactNode,
 } from 'react';
-import { googleIdsFromEnv, googleReadyOnThisPlatform } from '../auth/googleReady';
+import {
+    googleIdsFromEnv,
+    googleReadyOnThisPlatform,
+    missingGoogleKeyForPlatform,
+} from '../auth/googleReady';
 import { loadGoogleProfile } from '../auth/loadProfile';
 import type { GoogleProfile } from '../auth/types';
 
@@ -25,6 +29,8 @@ type GoogleCtx = {
     configured: boolean;
     busy: boolean;
     error: string | null;
+    missingKey: string | null;
+    sessionRestored: boolean;
     signIn: () => Promise<void>;
     signOut: () => Promise<void>;
 };
@@ -42,13 +48,14 @@ export function useGoogleSession(): GoogleCtx {
 export function GoogleGate({ children }: { children: ReactNode }) {
     const ids = googleIdsFromEnv(process.env);
     if (!googleReadyOnThisPlatform(Platform.OS, ids)) {
-        return <IdleGate>{children}</IdleGate>;
+        return <IdleGate ids={ids}>{children}</IdleGate>;
     }
     return <LiveGate ids={ids}>{children}</LiveGate>;
 }
 
 function useStoredProfile() {
     const [profile, setProfile] = useState<GoogleProfile | null>(null);
+    const [sessionRestored, setSessionRestored] = useState(false);
 
     useEffect(() => {
         let alive = true;
@@ -59,7 +66,12 @@ function useStoredProfile() {
                 }
                 setProfile(JSON.parse(raw) as GoogleProfile);
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(() => {
+                if (alive) {
+                    setSessionRestored(true);
+                }
+            });
         return () => {
             alive = false;
         };
@@ -74,12 +86,19 @@ function useStoredProfile() {
         await AsyncStorage.removeItem(PROFILE_KEY);
     }, []);
 
-    return { profile, persist };
+    return { profile, sessionRestored, persist };
 }
 
-function IdleGate({ children }: { children: ReactNode }) {
-    const { profile, persist } = useStoredProfile();
+function IdleGate({
+    children,
+    ids,
+}: {
+    children: ReactNode;
+    ids: ReturnType<typeof googleIdsFromEnv>;
+}) {
+    const { profile, sessionRestored, persist } = useStoredProfile();
     const [error, setError] = useState<string | null>(null);
+    const missingKey = missingGoogleKeyForPlatform(Platform.OS, ids);
 
     const value = useMemo<GoogleCtx>(
         () => ({
@@ -87,15 +106,25 @@ function IdleGate({ children }: { children: ReactNode }) {
             configured: false,
             busy: false,
             error,
+            missingKey,
+            sessionRestored,
             async signIn() {
-                setError(MISSING_IDS);
+                const message = missingKey ? `Missing ${missingKey}` : MISSING_IDS;
+                setError(message);
+                if (Platform.OS === 'web') {
+                    if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+                        window.alert(message);
+                    }
+                } else {
+                    Alert.alert('Google Client ID Missing', message);
+                }
             },
             async signOut() {
                 setError(null);
                 await persist(null);
             },
         }),
-        [profile, error, persist]
+        [profile, error, persist, missingKey, sessionRestored]
     );
 
     return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -119,7 +148,7 @@ function LiveGate({
             'https://www.googleapis.com/auth/youtube.readonly',
         ],
     });
-    const { profile, persist } = useStoredProfile();
+    const { profile, sessionRestored, persist } = useStoredProfile();
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -168,11 +197,14 @@ function LiveGate({
             configured: request !== null,
             busy,
             error,
+            missingKey: null,
+            sessionRestored,
             signIn,
             signOut,
         }),
-        [profile, request, busy, error, signIn, signOut]
+        [profile, request, busy, error, sessionRestored, signIn, signOut]
     );
 
     return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
+
