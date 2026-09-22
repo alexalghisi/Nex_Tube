@@ -28,6 +28,7 @@ npm start
 | `npm run ios` | iPhone / iPad |
 | `npm run android` | Phone / tablet |
 | `npm run build` | Web production bundle (`dist/`) |
+| `npm run build:ios` | iOS production bundle (`dist/`) |
 | `npm test` | Unit + feature tests |
 | `npm run typecheck` | `tsc --noEmit` |
 
@@ -50,9 +51,17 @@ Without the ids the rest of the app still runs. The Sign in button tells you whi
 ## Playback
 
 - No ad insertion in the player or the chrome
-- One `Video` host stays mounted; leaving watch only hides the pane
-- iOS `UIBackgroundModes: audio`, Android media playback service
+- Movable floating mini video player (Picture-in-Picture) drag-and-drop anywhere on screen
+- One `Video` host stays mounted; leaving watch keeps audio active seamlessly
+- iOS `UIBackgroundModes: audio` (system lock-screen playback), Android media playback service
 - Lock-screen / Media Session play and pause on web
+
+## iOS Distribution (Without App Store)
+
+Distribute to family devices without App Store review:
+1. **PWA (Safari)**: Open the web URL in Safari on iOS, tap **Share** → **Add to Home Screen**. Runs full-screen with lock-screen background audio.
+2. **AltStore / SideStore**: Run `npm run build:ios` or build an IPA via `eas build -p ios --profile preview`, then sign and install via AltStore or SideStore.
+3. **Ad-Hoc / TestFlight**: Register family device UDIDs in Apple Developer and distribute ad-hoc build links directly.
 
 ## Tests
 

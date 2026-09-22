@@ -25,6 +25,8 @@ describe('watch flow', () => {
         expect(urlWhileScreenHidden(video.streams)).toBe(urls.videoUrl);
         expect(session.snapshot().shouldKeepAudio).toBe(true);
         expect(session.snapshot().adsEnabled).toBe(false);
+        expect(session.snapshot().pictureInPictureEnabled).toBe(true);
+        expect(session.snapshot().floatingMiniPlayer).toBe(true);
 
         const history = pushHistory([], video);
         expect(history[0].id).toBe('bbb');
