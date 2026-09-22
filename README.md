@@ -59,6 +59,8 @@ On initial launch, users see the Connect with Google screen with options to sign
 
 ## Release Software & Device Installation
 
+Tag a version (`git tag v1.0.0 && git push --tags`) and the CI workflow produces three archives on the [GitHub Releases](https://github.com/alexalghisi/Nex_Tube/releases) page: `nextube-web.tar.gz`, `nextube-ios.tar.gz`, and `nextube-android.tar.gz`.
+
 ### iPhone & iPad (iOS)
 1. **PWA (Safari)**: Open the web build URL in Safari, tap **Share** → **Add to Home Screen**. Opens as a full-screen app with background lock-screen audio playback.
 2. **AltStore / SideStore**: Build the standalone bundle with `npm run build:ios` or package an IPA with `npx eas build -p ios --profile preview`, then install via AltStore or SideStore without jailbreak.
