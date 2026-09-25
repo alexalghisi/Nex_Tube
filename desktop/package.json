@@ -1,0 +1,53 @@
+{
+    "name": "nex-tube-desktop",
+    "version": "1.0.0",
+    "description": "Electron shell that packages the Nex Tube web build for macOS, Windows, and Linux.",
+    "license": "MIT",
+    "author": "alexalghisi",
+    "main": "main.js",
+    "private": true,
+    "scripts": {
+        "start": "electron .",
+        "dist:mac": "electron-builder --mac --publish never",
+        "dist:win": "electron-builder --win nsis --publish never",
+        "dist:linux": "electron-builder --linux --publish never"
+    },
+    "devDependencies": {
+        "electron": "^44.3.0",
+        "electron-builder": "^26.15.3"
+    },
+    "build": {
+        "appId": "com.alexalghisi.nextube",
+        "productName": "NexTube",
+        "directories": {
+            "output": "dist",
+            "buildResources": "build"
+        },
+        "files": [
+            "main.js",
+            "web/**/*"
+        ],
+        "mac": {
+            "category": "public.app-category.entertainment",
+            "artifactName": "${productName}-${version}-${arch}.${ext}",
+            "identity": null,
+            "target": [
+                {
+                    "target": "dmg",
+                    "arch": ["arm64", "x64"]
+                }
+            ]
+        },
+        "win": {
+            "target": ["nsis"]
+        },
+        "linux": {
+            "category": "AudioVideo",
+            "target": ["AppImage", "deb"]
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true
+        }
+    }
+}

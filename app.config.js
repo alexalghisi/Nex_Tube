@@ -1,3 +1,35 @@
+const { withAndroidManifest } = require('@expo/config-plugins');
+
+function withTvLauncher(config) {
+    return withAndroidManifest(config, (config) => {
+        const manifest = config.modResults.manifest;
+        manifest['uses-feature'] = manifest['uses-feature'] || [];
+        manifest['uses-feature'].push({
+            $: {
+                'android:name': 'android.software.leanback',
+                'android:required': 'false',
+            },
+        });
+        manifest['uses-feature'].push({
+            $: {
+                'android:name': 'android.hardware.touchscreen',
+                'android:required': 'false',
+            },
+        });
+        const activity = manifest.application?.[0]?.activity?.find(
+            (item) => item.$['android:name'] === '.MainActivity'
+        );
+        if (activity) {
+            activity['intent-filter'] = activity['intent-filter'] || [];
+            activity['intent-filter'].push({
+                action: [{ $: { 'android:name': 'android.intent.action.MAIN' } }],
+                category: [{ $: { 'android:name': 'android.intent.category.LEANBACK_LAUNCHER' } }],
+            });
+        }
+        return config;
+    });
+}
+
 function iosGoogleScheme() {
     const clientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
     if (!clientId.endsWith('.apps.googleusercontent.com')) {
@@ -56,6 +88,7 @@ module.exports = {
             favicon: './assets/favicon.png',
         },
         plugins: [
+            withTvLauncher,
             'expo-web-browser',
             [
                 'expo-av',
