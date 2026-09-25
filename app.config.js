@@ -90,8 +90,9 @@ module.exports = {
         plugins: [
             withTvLauncher,
             'expo-web-browser',
+            'expo-video',
             [
-                'expo-av',
+                'expo-audio',
                 {
                     microphonePermission: false,
                 },
