@@ -1,4 +1,4 @@
-import { ResizeMode, Video } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEffect, useRef } from 'react';
 import { Animated, PanResponder, StyleSheet, useWindowDimensions } from 'react-native';
 import { pickPlaybackStreams } from '../catalog/streamPick';
@@ -13,11 +13,15 @@ type Props = {
 };
 
 export function PlayerHost({ snap, watchOpen, headerOffset, onReport }: Props) {
-    const ref = useRef<Video>(null);
     const { width } = useWindowDimensions();
     const uri = snap.video ? pickPlaybackStreams(snap.video.streams).videoUrl : null;
     const fullHeight = (width * 9) / 16;
+    const player = useVideoPlayer(uri, (instance) => {
+        instance.timeUpdateEventInterval = 0.5;
+    });
     const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+    const onReportRef = useRef(onReport);
+    onReportRef.current = onReport;
 
     useEffect(() => {
         if (watchOpen) {
@@ -43,17 +47,30 @@ export function PlayerHost({ snap, watchOpen, headerOffset, onReport }: Props) {
     ).current;
 
     useEffect(() => {
-        if (!uri || !ref.current) {
+        if (!uri) {
             return;
         }
         if (snap.status === 'playing') {
-            ref.current.playAsync().catch(() => undefined);
+            player.play();
             return;
         }
         if (snap.status === 'paused') {
-            ref.current.pauseAsync().catch(() => undefined);
+            player.pause();
         }
-    }, [snap.status, uri]);
+    }, [player, snap.status, uri]);
+
+    useEffect(() => {
+        const time = player.addListener('timeUpdate', (event) => {
+            onReportRef.current(event.currentTime, player.duration, false);
+        });
+        const ended = player.addListener('playToEnd', () => {
+            onReportRef.current(player.currentTime, player.duration, true);
+        });
+        return () => {
+            time.remove();
+            ended.remove();
+        };
+    }, [player]);
 
     if (!uri) {
         return null;
@@ -70,23 +87,11 @@ export function PlayerHost({ snap, watchOpen, headerOffset, onReport }: Props) {
                 { pointerEvents: 'box-none' },
             ]}
         >
-            <Video
-                ref={ref}
-                source={{ uri }}
+            <VideoView
+                player={player}
                 style={full ? [styles.full, { width, height: fullHeight }] : styles.mini}
-                resizeMode={ResizeMode.CONTAIN}
-                shouldPlay={snap.status === 'playing'}
-                useNativeControls={full}
-                onPlaybackStatusUpdate={(status) => {
-                    if (!status.isLoaded) {
-                        return;
-                    }
-                    onReport(
-                        status.positionMillis / 1000,
-                        (status.durationMillis ?? 0) / 1000,
-                        Boolean(status.didJustFinish)
-                    );
-                }}
+                contentFit="contain"
+                nativeControls={full}
             />
         </Animated.View>
     );
