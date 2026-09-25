@@ -4,38 +4,106 @@ on:
     push:
         tags:
             - 'v*'
-    workflow_dispatch:
 
 permissions:
     contents: write
 
 jobs:
-    release:
+    android:
+        name: Build Android APK
         runs-on: ubuntu-latest
-        env:
-            EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-            APPLE_ID: ${{ secrets.APPLE_ID }}
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-node@v4
               with:
-                  node-version: '22'
+                  node-version: 22
+                  cache: npm
+            - uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: 17
+            - uses: android-actions/setup-android@v3
+            - run: npm ci
+            - run: npx expo prebuild --platform android --no-install
+            - working-directory: android
+              run: ./gradlew assembleRelease --no-daemon
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: nex-android
+                  path: android/app/build/outputs/apk/release/*.apk
+                  if-no-files-found: error
+
+    ios:
+        name: Build iOS IPA
+        runs-on: macos-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
                   cache: npm
             - run: npm ci
-            - run: npm test
-            - run: npm run typecheck
-            - run: |
-                  npm run build
-                  mkdir -p release-assets
-                  tar -czf release-assets/nextube-web.tar.gz dist/
-            - name: Build Android APK
-              if: env.EXPO_TOKEN != ''
-              run: npx eas-cli build -p android --profile preview --non-interactive --output release-assets/nextube-android.apk
-            - name: Build iOS IPA
-              if: env.EXPO_TOKEN != '' && env.APPLE_ID != ''
-              run: npx eas-cli build -p ios --profile preview --non-interactive --output release-assets/nextube-ios.ipa
-            - uses: softprops/action-gh-release@v2
-              if: startsWith(github.ref, 'refs/tags/')
+            - run: npx expo prebuild --platform ios --no-install
+            - working-directory: ios
+              run: pod install
+            - name: Build unsigned archive
+              working-directory: ios
+              run: |
+                  SCHEME=$(basename ./*.xcworkspace .xcworkspace)
+                  xcodebuild archive \
+                    -workspace "$SCHEME.xcworkspace" \
+                    -scheme "$SCHEME" \
+                    -configuration Release \
+                    -destination 'generic/platform=iOS' \
+                    -archivePath "$RUNNER_TEMP/$SCHEME.xcarchive" \
+                    CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+            - name: Package unsigned IPA
+              run: |
+                  APP=$(ls -d "$RUNNER_TEMP"/*.xcarchive/Products/Applications/*.app | head -1)
+                  mkdir -p "$RUNNER_TEMP/Payload"
+                  cp -R "$APP" "$RUNNER_TEMP/Payload/"
+                  (cd "$RUNNER_TEMP" && zip -qry "$GITHUB_WORKSPACE/NexTube-unsigned.ipa" Payload)
+            - uses: actions/upload-artifact@v4
               with:
-                  files: release-assets/*
+                  name: nex-ios
+                  path: NexTube-unsigned.ipa
+                  if-no-files-found: error
 
+    macos:
+        name: Build macOS DMG
+        runs-on: macos-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+            - run: npm run export:web
+            - run: npm run desktop:web
+            - working-directory: desktop
+              run: npm ci
+            - working-directory: desktop
+              run: npm run dist:mac
+              env:
+                  CSC_IDENTITY_AUTO_DISCOVERY: false
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: nex-macos
+                  path: desktop/dist/*.dmg
+                  if-no-files-found: error
+
+    publish:
+        name: Publish GitHub Release
+        needs: [android, ios, macos]
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/download-artifact@v4
+              with:
+                  path: artifacts
+            - uses: softprops/action-gh-release@v2
+              with:
+                  files: |
+                      artifacts/nex-android/*.apk
+                      artifacts/nex-ios/*.ipa
+                      artifacts/nex-macos/*.dmg

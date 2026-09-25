@@ -40,3 +40,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# sideload packages
+/release-assets/
+dist-web/
+desktop/web/
+desktop/dist/
+desktop/node_modules/
