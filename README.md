@@ -57,39 +57,50 @@ On initial launch, users see the Connect with Google screen with options to sign
 - iOS `UIBackgroundModes: audio` (system lock-screen playback), Android media playback service
 - Lock-screen / Media Session play and pause on web
 
-## Release Software & Device Installation
+## Install
 
-Tag a version (`git tag v1.0.0 && git push --tags`) and the CI workflow publishes installable builds on the [GitHub Releases](https://github.com/alexalghisi/Nex_Tube/releases) page:
+Tagged releases publish the same kind of files as [collab](https://github.com/alexalghisi/collab/releases): an Android APK, an unsigned iOS IPA, and a macOS DMG. See [Nex Tube releases](https://github.com/alexalghisi/Nex_Tube/releases).
 
-| Asset | Device |
+| File | Install |
 | --- | --- |
-| `nextube-web.tar.gz` | MacBook / any browser / iOS PWA via Safari |
-| `nextube-android.apk` | Android phones & tablets (sideload) |
-| `nextube-ios.ipa` | iPhone & iPad (via AltStore / SideStore) |
+| `app-release.apk` | Allview / any Android. Allow unknown sources, open the file. |
+| `NexTube-unsigned.ipa` | Same as `Collab-unsigned.ipa`. iOS will not install it from Safari. AltStore or SideStore re-signs it with your Apple ID. |
+| `NexTube-*-arm64.dmg` | Mac with Apple silicon. Open the DMG and drag the app to Applications. |
+| `com.alexalghisi.nextube_1.0.0_all.ipk` | LG webOS, Developer Mode only. Built locally with `npm run package:webos`. |
 
-### CI Setup for Native Builds
+On iPhone without AltStore, Safari → Share → Add to Home Screen still works while the web app is hosted.
 
-The Android APK and iOS IPA are built by EAS Build in CI. To enable them:
+## Allview (Android)
 
-1. Create an access token at https://expo.dev/settings/access-tokens
-2. Add it as `EXPO_TOKEN` in **GitHub → Settings → Secrets → Actions**
-3. For iOS, also add `APPLE_ID` and run `npx eas credentials` locally to set up signing
-
-Without `EXPO_TOKEN`, releases still ship the web tarball. Without `APPLE_ID`, the iOS step is skipped.
-
-### Manual Builds
+Allview phones, tablets, and Android TVs install a normal APK. Unknown sources must be on. The debug build is signed with the local debug key, which Android accepts for sideload.
 
 ```bash
-npx eas build -p android --profile preview
-npx eas build -p ios --profile preview
+npm run package:android
 ```
 
-### iPhone & iPad (iOS)
-1. **PWA (Safari)**: Open the web build URL in Safari, tap **Share** → **Add to Home Screen**. Opens as a full-screen app with background lock-screen audio playback.
-2. **AltStore / SideStore**: Download the `.ipa` from GitHub Releases and install via AltStore or SideStore without jailbreak.
+Copy `release-assets/nextube-allview.apk` onto the device and open it. On an Android TV remote, the same package shows in the launcher because the manifest also registers `LEANBACK_LAUNCHER`. Touch is not required.
 
-### Android
-1. **APK Direct Install**: Download `nextube-android.apk` from GitHub Releases and sideload onto your device.
+## LG webOS
+
+LG does not install an APK. The TV package is an `.ipk`, and a shop TV only accepts it while Developer Mode is on.
+
+```bash
+npm run package:webos
+```
+
+That writes `release-assets/com.alexalghisi.nextube_1.0.0_all.ipk`.
+
+On the TV: Content Store → **Developer Mode** → sign in → Dev Mode On. Note the passphrase.
+
+On the computer, same network as the TV:
+
+```bash
+npx -p @webos-tools/cli ares-setup-device
+npx -p @webos-tools/cli ares-install --device tv release-assets/com.alexalghisi.nextube_1.0.0_all.ipk
+npx -p @webos-tools/cli ares-launch --device tv com.alexalghisi.nextube
+```
+
+The pointer on the Magic Remote works on this UI. Closing the watch screen leaves the mini player running inside the app. webOS still stops media when you leave the app entirely; that is the TV, not an ad.
 
 ## Tests
 
