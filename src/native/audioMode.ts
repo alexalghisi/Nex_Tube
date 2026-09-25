@@ -1,12 +1,11 @@
-import { Audio } from 'expo-av';
+import { setAudioModeAsync } from 'expo-audio';
 
 export async function armBackgroundAudio(): Promise<void> {
-    await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: false,
-        playThroughEarpieceAndroid: false,
-        interruptionModeIOS: 1,
-        interruptionModeAndroid: 1,
+    await setAudioModeAsync({
+        playsInSilentMode: true,
+        shouldPlayInBackground: true,
+        interruptionMode: 'doNotMix',
+        allowsRecording: false,
+        shouldRouteThroughEarpiece: false,
     });
 }
