@@ -59,14 +59,15 @@ On initial launch, users see the Connect with Google screen with options to sign
 
 ## Install
 
-Tagged releases publish the same kind of files as [collab](https://github.com/alexalghisi/collab/releases): an Android APK, an unsigned iOS IPA, and a macOS DMG. See [Nex Tube releases](https://github.com/alexalghisi/Nex_Tube/releases).
+Tagged releases publish the same kind of files as [collab](https://github.com/alexalghisi/collab/releases): an Android APK, an unsigned iOS IPA, and macOS DMGs. The names below download those files from the [v1.0.2 release](https://github.com/alexalghisi/Nex_Tube/releases/tag/v1.0.2).
 
 | File | Install |
 | --- | --- |
-| `app-release.apk` | Allview / any Android. Allow unknown sources, open the file. |
-| `NexTube-unsigned.ipa` | Same as `Collab-unsigned.ipa`. iOS will not install it from Safari. AltStore or SideStore re-signs it with your Apple ID. |
-| `NexTube-*-arm64.dmg` | Mac with Apple silicon. Open the DMG and drag the app to Applications. |
-| `com.alexalghisi.nextube_1.0.0_all.ipk` | LG webOS, Developer Mode only. Built locally with `npm run package:webos`. |
+| [app-release.apk](https://github.com/alexalghisi/Nex_Tube/releases/download/v1.0.2/app-release.apk) | Allview / any Android. Allow unknown sources, open the file. |
+| [NexTube-unsigned.ipa](https://github.com/alexalghisi/Nex_Tube/releases/download/v1.0.2/NexTube-unsigned.ipa) | Same as `Collab-unsigned.ipa`. iOS will not install it from Safari. AltStore or SideStore re-signs it with your Apple ID. |
+| [NexTube-1.0.0-arm64.dmg](https://github.com/alexalghisi/Nex_Tube/releases/download/v1.0.2/NexTube-1.0.0-arm64.dmg) | Mac with Apple silicon. Open the DMG and drag the app to Applications. |
+| [NexTube-1.0.0-x64.dmg](https://github.com/alexalghisi/Nex_Tube/releases/download/v1.0.2/NexTube-1.0.0-x64.dmg) | Mac with Intel. Open the DMG and drag the app to Applications. |
+| com.alexalghisi.nextube_1.0.0_all.ipk | LG webOS, Developer Mode only. This package is not on the GitHub release — build it locally with `npm run package:webos`. |
 
 On iPhone without AltStore, Safari → Share → Add to Home Screen still works while the web app is hosted.
 
